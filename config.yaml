@@ -1,0 +1,11 @@
+credentials:
+  usernames:
+    murilo:
+      email: murilo@email.com
+      name: Murilo
+      password: 123456  # Use hash depois
+
+cookie:
+  expiry_days: 30
+  key: some_signature_key_anything123
+  name: sistema_estoq
