@@ -11,153 +11,211 @@ st.set_page_config(page_title="SofiHub - Gestão de Estoque", layout="wide", pag
 
 st.markdown("""
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+* { font-family: 'Inter', sans-serif; }
 
-* { font-family: 'Plus Jakarta Sans', sans-serif; }
+/* ── Fundo geral ── */
+.stApp { background: #F7F8FA; }
+.block-container { padding-top: 2rem !important; }
 
-.stApp { background: #F0F4F8; }
-
-/* ── Sidebar ── */
+/* ══════════════════════════════
+   SIDEBAR — clean dark
+══════════════════════════════ */
 section[data-testid="stSidebar"] {
-    background: #0F1C2E !important;
-    border-right: 2px solid #1E3A5F;
+    background: #111827 !important;
+    border-right: 1px solid #1F2937;
+    min-width: 220px !important;
+    max-width: 220px !important;
 }
-section[data-testid="stSidebar"] * { color: #CBD5E1 !important; }
+/* Remove bolinhas do radio */
+section[data-testid="stSidebar"] input[type="radio"] { display: none !important; }
+section[data-testid="stSidebar"] [data-testid="stMarkdownContainer"] p { display: none !important; }
+/* Itens do menu */
+section[data-testid="stSidebar"] .stRadio > div { gap: 2px !important; }
 section[data-testid="stSidebar"] .stRadio label {
-    background: rgba(255,255,255,0.04);
-    border-radius: 10px;
-    padding: 10px 14px !important;
-    margin-bottom: 4px !important;
-    border: 1px solid transparent;
-    transition: all 0.2s;
-    display: block;
-    color: #CBD5E1 !important;
-    font-weight: 500;
-    font-size: 0.95rem;
+    display: flex !important;
+    align-items: center !important;
+    padding: 10px 16px !important;
+    border-radius: 8px !important;
+    color: #9CA3AF !important;
+    font-size: 0.88rem !important;
+    font-weight: 500 !important;
+    cursor: pointer !important;
+    transition: all 0.15s !important;
+    margin: 1px 8px !important;
+    border: none !important;
+    background: transparent !important;
 }
 section[data-testid="stSidebar"] .stRadio label:hover {
-    background: rgba(240,90,40,0.15) !important;
-    border-color: rgba(240,90,40,0.3) !important;
-    color: white !important;
+    background: #1F2937 !important;
+    color: #F9FAFB !important;
 }
-section[data-testid="stSidebar"] input[type="radio"] { display: none !important; }
+section[data-testid="stSidebar"] .stRadio label[data-baseweb="radio"]:has(input:checked),
+section[data-testid="stSidebar"] .stRadio div[role="radiogroup"] label:has(input:checked) {
+    background: #1F2937 !important;
+    color: #F9FAFB !important;
+    font-weight: 600 !important;
+}
+/* Sidebar brand */
+.sidebar-brand {
+    padding: 1.5rem 1rem 1rem 1rem;
+    border-bottom: 1px solid #1F2937;
+    margin-bottom: 0.75rem;
+}
+.sidebar-brand-name {
+    color: #F9FAFB !important;
+    font-size: 1.1rem !important;
+    font-weight: 700 !important;
+    margin: 0 !important;
+    display: block;
+}
+.sidebar-brand-sub {
+    color: #6B7280 !important;
+    font-size: 0.75rem !important;
+    margin: 2px 0 0 0 !important;
+    display: block;
+}
+/* Botão atualizar na sidebar */
+section[data-testid="stSidebar"] .stButton > button {
+    background: #1F2937 !important;
+    color: #9CA3AF !important;
+    border: 1px solid #374151 !important;
+    border-radius: 8px !important;
+    font-size: 0.85rem !important;
+    font-weight: 500 !important;
+    padding: 0.5rem 1rem !important;
+    box-shadow: none !important;
+    margin: 0 8px !important;
+    width: calc(100% - 16px) !important;
+}
+section[data-testid="stSidebar"] .stButton > button:hover {
+    background: #374151 !important;
+    color: #F9FAFB !important;
+    transform: none !important;
+}
 
-/* ── Botões ── */
+/* ══════════════════════════════
+   BOTÕES principais
+══════════════════════════════ */
 .stButton > button {
-    background: linear-gradient(135deg, #F05A28, #D94E20) !important;
+    background: #F05A28 !important;
     color: white !important;
     border: none !important;
-    border-radius: 10px !important;
-    font-weight: 600 !important;
-    padding: 0.6rem 1.5rem !important;
-    transition: all 0.2s !important;
-    box-shadow: 0 3px 12px rgba(240,90,40,0.3) !important;
-}
-.stButton > button:hover {
-    transform: translateY(-1px) !important;
-    box-shadow: 0 6px 20px rgba(240,90,40,0.4) !important;
-}
-
-/* ── Cards de métrica ── */
-.card {
-    background: white;
-    border-radius: 16px;
-    padding: 1.4rem 1.6rem;
-    box-shadow: 0 2px 12px rgba(0,0,0,0.07);
-    border-left: 4px solid #F05A28;
-    margin-bottom: 1rem;
-}
-.card-title {
-    font-size: 0.82rem;
-    font-weight: 600;
-    color: #64748B;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    margin-bottom: 0.4rem;
-}
-.card-value { font-size: 2.2rem; font-weight: 800; line-height: 1; }
-.card-green  { border-left-color: #22C55E; }
-.card-orange { border-left-color: #F05A28; }
-.card-red    { border-left-color: #EF4444; }
-.card-blue   { border-left-color: #3B82F6; }
-
-/* ── Formulários ── */
-.stForm {
-    background: white !important;
-    border-radius: 16px !important;
-    padding: 2rem !important;
-    box-shadow: 0 2px 12px rgba(0,0,0,0.07) !important;
-    border: 1px solid #E2E8F0 !important;
-}
-
-/* ── Seções dentro do form ── */
-.form-section {
-    background: #F8FAFC;
-    border-radius: 12px;
-    padding: 1.2rem 1.4rem;
-    margin-bottom: 1rem;
-    border: 1px solid #E2E8F0;
-}
-.form-section-title {
-    font-size: 0.78rem;
-    font-weight: 700;
-    color: #64748B;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    margin-bottom: 0.6rem;
-}
-
-/* ── Cards clicáveis ── */
-.card:hover {
-    box-shadow: 0 8px 28px rgba(0,0,0,0.13) !important;
-    transform: translateY(-3px);
-    transition: all 0.2s;
-}
-.card-hint {
-    font-size: 0.72rem;
-    color: #94A3B8;
-    margin-top: 0.5rem;
-}
-
-/* ── Títulos ── */
-.section-header {
-    font-size: 1.6rem;
-    font-weight: 800;
-    color: #0F1C2E;
-    margin-bottom: 1.2rem;
-}
-
-/* ── Tabs ── */
-.stTabs [data-baseweb="tab-list"] {
-    background: white;
-    border-radius: 12px;
-    padding: 4px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-}
-.stTabs [data-baseweb="tab"] {
     border-radius: 8px !important;
     font-weight: 600 !important;
-    color: #64748B !important;
+    font-size: 0.88rem !important;
+    padding: 0.55rem 1.4rem !important;
+    transition: all 0.15s !important;
+    box-shadow: none !important;
+}
+.stButton > button:hover {
+    background: #D94E20 !important;
+    transform: none !important;
+    box-shadow: 0 4px 12px rgba(240,90,40,0.25) !important;
+}
+
+/* ══════════════════════════════
+   CARDS métricas
+══════════════════════════════ */
+.card {
+    background: white;
+    border-radius: 12px;
+    padding: 1.25rem 1.5rem;
+    border: 1px solid #E5E7EB;
+    margin-bottom: 0.5rem;
+}
+.card-title {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #6B7280;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    margin-bottom: 0.5rem;
+}
+.card-value { font-size: 2rem; font-weight: 700; line-height: 1; }
+.card-hint { font-size: 0.7rem; color: #9CA3AF; margin-top: 0.4rem; }
+.card-green  { border-top: 3px solid #22C55E; }
+.card-orange { border-top: 3px solid #F05A28; }
+.card-red    { border-top: 3px solid #EF4444; }
+.card-blue   { border-top: 3px solid #3B82F6; }
+
+/* ══════════════════════════════
+   FORMULÁRIOS
+══════════════════════════════ */
+.stForm {
+    background: white !important;
+    border-radius: 12px !important;
+    padding: 1.5rem 2rem !important;
+    border: 1px solid #E5E7EB !important;
+    box-shadow: none !important;
+}
+.form-section {
+    border: 1px solid #E5E7EB;
+    border-radius: 10px;
+    padding: 1rem 1.25rem 0.25rem 1.25rem;
+    margin-bottom: 1.25rem;
+    background: #FAFAFA;
+}
+.form-section-title {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: #6B7280;
+    text-transform: uppercase;
+    letter-spacing: 0.09em;
+    margin-bottom: 0.75rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid #E5E7EB;
+}
+
+/* ══════════════════════════════
+   TÍTULO DE SEÇÃO
+══════════════════════════════ */
+.section-header {
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: #111827;
+    margin-bottom: 1.25rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid #E5E7EB;
+}
+
+/* ══════════════════════════════
+   TABS
+══════════════════════════════ */
+.stTabs [data-baseweb="tab-list"] {
+    background: white;
+    border-radius: 10px;
+    padding: 3px;
+    border: 1px solid #E5E7EB;
+    gap: 2px;
+}
+.stTabs [data-baseweb="tab"] {
+    border-radius: 7px !important;
+    font-weight: 500 !important;
+    font-size: 0.87rem !important;
+    color: #6B7280 !important;
+    padding: 0.4rem 1rem !important;
 }
 .stTabs [aria-selected="true"] {
     background: #F05A28 !important;
     color: white !important;
+    font-weight: 600 !important;
 }
 
-/* ── Tabela ── */
-.stDataFrame { border-radius: 12px !important; overflow: hidden; }
-[data-testid="stDataFrame"] { border-radius: 12px !important; box-shadow: 0 2px 12px rgba(0,0,0,0.07); }
-
-hr { border-color: #E2E8F0 !important; margin: 1.5rem 0 !important; }
-
-.sidebar-brand {
-    padding: 1rem 0 0.5rem 0;
-    text-align: center;
-    border-bottom: 1px solid rgba(255,255,255,0.1);
-    margin-bottom: 1rem;
+/* ══════════════════════════════
+   TABELA
+══════════════════════════════ */
+.stDataFrame, [data-testid="stDataFrame"] {
+    border-radius: 10px !important;
+    border: 1px solid #E5E7EB !important;
+    overflow: hidden;
 }
-.sidebar-brand h2 { color: white !important; font-size: 1.3rem; font-weight: 800; margin: 0; }
-.sidebar-brand p  { color: #94A3B8 !important; font-size: 0.75rem; margin: 0; }
+
+/* ══════════════════════════════
+   MISC
+══════════════════════════════ */
+hr { border-color: #E5E7EB !important; margin: 1.25rem 0 !important; }
+h2, h3, h4 { color: #111827 !important; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -210,8 +268,8 @@ if 'relatorio_tab' not in st.session_state:
 with st.sidebar:
     st.markdown("""
     <div class="sidebar-brand">
-        <h2>📦 SofiHub</h2>
-        <p>Gestão de Estoque</p>
+        <span class="sidebar-brand-name">📦 SofiHub</span>
+        <span class="sidebar-brand-sub">Gestão de Estoque</span>
     </div>
     """, unsafe_allow_html=True)
 
