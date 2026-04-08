@@ -72,8 +72,8 @@ df_p, df_m, df_c = carregar_dados()
 # 3. SIDEBAR COM LOGO
 with st.sidebar:
     # Atenção: Verifique se o nome do arquivo no seu GitHub é "logo.jpg"
-    if os.path.exists("logo.jpg"):
-        st.image("logo.jpg", use_container_width=True)
+    if os.path.exists("logo.jpg.png"):
+        st.image("logo.jpg.png", use_container_width=True)
     else:
         st.markdown("## 🚀 SofiHub")
     
