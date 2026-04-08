@@ -2,83 +2,102 @@ import streamlit as st
 import pandas as pd
 from datetime import datetime
 
-# Configurações de página
-st.set_page_config(page_title="Sistema Murilo - Gestão", layout="wide")
+# Configurações de página e Identidade Visual (Cores baseadas na logo)
+st.set_page_config(page_title="SofiHub - Gestão Inteligente", layout="wide", page_icon="🚀")
 
-# Configuração do link da sua planilha
+# URL da logo (pode ser um link do GitHub ou Imgur onde você hospedou a imagem)
+LOGO_URL = "INSIRA_AQUI_O_LINK_DIRETO_DA_SUA_LOGO_HOSPEDADA" # Ex: https://raw.githubusercontent.com/.../logo.png
+
+# Estilização CSS personalizada para fixar as cores da logo SofiHub
+st.markdown(f"""
+    <style>
+    /* Cor principal do texto (Azul Petróleo SofiHub) */
+    .stApp, .css-10trblm, p, h1, h2, h3, .stMetric label {{
+        color: #0A2540 !important;
+    }}
+    /* Cor de destaque (Laranja SofiHub) para botões e links */
+    .stButton>button {{
+        background-color: #F05A28 !important;
+        color: white !important;
+        border: none;
+        border-radius: 8px;
+        transition: all 0.3s;
+    }}
+    .stButton>button:hover {{
+        background-color: #D64C20 !important; /* Laranja mais escuro no hover */
+        transform: scale(1.02);
+    }}
+    /* Estilo dos Cards de Métrica */
+    div[data-testid="metric-container"] {{
+        background-color: white;
+        padding: 15px;
+        border-radius: 10px;
+        border: 1px solid #f0f0f0;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.03);
+    }}
+    /* Alertas customizados */
+    .stAlert {{
+        border-left: 5px solid #F05A28 !important;
+    }}
+    </style>
+    """, unsafe_allow_html=True)
+
+# Link da planilha formatado (GID=0 é a primeira aba "Produtos")
 SHEET_ID = "1STMwOAe88ZdRrN749aYNLepkeWpv9jiwHZpODRONubw"
-# Links para exportação direta de cada aba
 URL_PRODUTOS = f"https://docs.google.com/spreadsheets/d/{SHEET_ID}/export?format=csv&gid=0"
-URL_MOVS = f"https://docs.google.com/spreadsheets/d/{SHEET_ID}/export?format=csv&gid=1626210046" # GID da aba Movimentacoes
 
-st.title("📦 Gestão de Estoque Profissional")
+# --- BARRA LATERAL (IDENTIDADE) ---
+with st.sidebar:
+    st.image(LOGO_URL, use_column_width=True)
+    st.markdown("---")
+    st.markdown("### Menu de Gestão")
+    menu = st.radio("", ["📊 Dashboard", "🆕 Registrar Item", "🔄 Movimentar Estoque", "📋 Relatórios"])
+    st.markdown("---")
+    st.caption("SofiHub v1.0 - Hub de Soluções Tecnológicas")
 
-# Função para carregar os dados
+# Função para carregar dados (Robustez contra erro 400 em planilha vazia)
 def carregar_dados():
     try:
-        # Lendo os dados. Se estiver vazio (apenas cabeçalho), ele cria um DataFrame limpo
-        produtos = pd.read_csv(URL_PRODUTOS).dropna(how='all')
-        movs = pd.read_csv(URL_MOVS).dropna(how='all')
-        return produtos, movs
+        produtos = pd.read_csv(URL_PRODUTOS)
+        # Se a planilha tiver apenas o cabeçalho, garante que o Pandas entenda as colunas
+        if produtos.empty:
+            cols = ["ID", "SKU", "Nome", "Categoria", "Qtd_Atual", "Estoque_Minimo", "Preco_Custo", "Preco_Venda", "Localizacao"]
+            produtos = pd.DataFrame(columns=cols)
+        return produtos
     except Exception as e:
-        st.error(f"Erro ao carregar dados: {e}")
-        return pd.DataFrame(), pd.DataFrame()
+        # Se der erro 400 ou outro, cria uma estrutura vazia padrão
+        cols = ["ID", "SKU", "Nome", "Categoria", "Qtd_Atual", "Estoque_Minimo", "Preco_Custo", "Preco_Venda", "Localizacao"]
+        return pd.DataFrame(columns=cols)
 
-df_produtos, df_movs = carregar_dados()
-
-# Menu lateral
-menu = st.sidebar.selectbox("Navegação", ["Dashboard", "Registrar Movimentação", "Relatórios"])
+df_p = carregar_dados()
 
 # --- LÓGICA DO DASHBOARD ---
-if menu == "Dashboard":
-    st.subheader("📊 Resumo do Inventário")
+if menu == "📊 Dashboard":
+    st.title("📊 Painel SofiHub")
     
-    if df_produtos.empty or len(df_produtos) == 0:
-        st.info("Sua planilha está pronta! Comece cadastrando um item ou adicionando dados na linha 2 do Google Sheets.")
-    else:
-        # Métricas
-        c1, c2, c3 = st.columns(3)
-        c1.metric("Itens Cadastrados", len(df_produtos))
+    # Métricas formatadas em Cards brancos com texto Azul SofiHub
+    c1, c2, c3 = st.columns(3)
+    c1.metric("Total SKUs", len(df_p))
+    
+    # Tratamento de dados numéricos para evitar erros
+    if not df_p.empty:
+        df_p['Qtd_Atual'] = pd.to_numeric(df_p['Qtd_Atual'], errors='coerce').fillna(0)
+        df_p['Preco_Custo'] = pd.to_numeric(df_p['Preco_Custo'], errors='coerce').fillna(0)
+        df_p['Estoque_Minimo'] = pd.to_numeric(df_p['Estoque_Minimo'], errors='coerce').fillna(0)
         
-        # Converter colunas para número para evitar erros de cálculo
-        df_produtos['Qtd_Atual'] = pd.to_numeric(df_produtos['Qtd_Atual'], errors='coerce').fillna(0)
-        df_produtos['Preco_Custo'] = pd.to_numeric(df_produtos['Preco_Custo'], errors='coerce').fillna(0)
+        capital = (df_p['Qtd_Atual'] * df_p['Preco_Custo']).sum()
+        c2.metric("Capital Parado (Custo)", f"R$ {capital:,.2f}")
         
-        valor_total = (df_produtos['Qtd_Atual'] * df_produtos['Preco_Custo']).sum()
-        c2.metric("Valor Total (Custo)", f"R$ {valor_total:,.2f}")
+        criticos = len(df_p[df_p['Qtd_Atual'] <= df_p['Estoque_Minimo']])
+        c3.metric("Itens Críticos", criticos)
         
-        alertas = df_produtos[df_produtos['Qtd_Atual'] <= df_produtos['Estoque_Minimo']]
-        c3.metric("Alertas de Reposição", len(alertas))
-
         st.divider()
-        st.dataframe(df_produtos, use_container_width=True)
-
-# --- LÓGICA DE MOVIMENTAÇÃO ---
-elif menu == "Registrar Movimentação":
-    st.subheader("🔄 Entrada e Saída de Estoque")
-    
-    if df_produtos.empty:
-        st.warning("Adicione produtos na aba 'Produtos' primeiro para poder movimentar.")
+        st.subheader("Lista de Inventário")
+        st.dataframe(df_p, use_container_width=True, hide_index=True)
+        
+        if criticos > 0:
+            st.warning(f"⚠️ Atenção: {criticos} itens precisam de reposição imediata!")
     else:
-        with st.form("mov"):
-            lista = (df_produtos['SKU'].astype(str) + " - " + df_produtos['Nome'].astype(str)).tolist()
-            escolha = st.selectbox("Selecione o Produto", lista)
-            tipo = st.radio("Operação", ["Entrada", "Saída"])
-            qtd = st.number_input("Quantidade", min_value=1, step=1)
-            motivo = st.text_input("Observação/Motivo")
-            btn = st.form_submit_button("Confirmar Movimentação")
-            
-            if btn:
-                st.success(f"Movimentação de {qtd} unidades registrada para {escolha}!")
-                st.info("Para salvar de volta no Google Sheets, o próximo passo é configurar as 'Credentials'.")
-
-# --- RELATÓRIOS ---
-elif menu == "Relatórios":
-    st.subheader("📑 Histórico e Exportação")
-    if not df_movs.empty:
-        st.dataframe(df_movs, use_container_width=True)
-    else:
-        st.write("Nenhuma movimentação registrada ainda.")
-    
-    csv = df_produtos.to_csv(index=False).encode('utf-8')
-    st.download_button("📥 Baixar Excel (CSV)", csv, "estoque.csv", "text/csv")
+        c2.metric("Capital Parado", "R$ 0.00")
+        c3.metric("Itens Críticos", "0")
+        st.info("🚀 SofiHub pronto! Use o menu 'Registrar Item' para começar.")
