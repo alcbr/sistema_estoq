@@ -4,194 +4,157 @@ import pandas as pd
 from datetime import datetime
 import os
 
-# 1. CONFIGURAÇÕES DE PÁGINA E IDENTIDADE SOFIHUB
+# 1. CONFIGURAÇÕES DE PÁGINA
 st.set_page_config(page_title="SofiHub - Gestão Inteligente", layout="wide", page_icon="🚀")
 
-# Estilização CSS para forçar a paleta da Logo SofiHub (Azul Petróleo e Laranja)
+# Estilização CSS SofiHub
 st.markdown("""
     <style>
-    /* Cores de Fundo e Texto */
     .stApp { background-color: #F8F9FA; }
-    h1, h2, h3, p, label { color: #0A2540 !important; font-family: 'Segoe UI', sans-serif; }
-    
-    /* Botões com o Laranja SofiHub */
+    h1, h2, h3, p, label { color: #0A2540 !important; }
     .stButton>button {
         background-color: #F05A28 !important;
         color: white !important;
-        border: none;
-        padding: 10px 20px;
         border-radius: 8px;
-        font-weight: bold;
-        transition: 0.3s;
         width: 100%;
-    }
-    .stButton>button:hover { transform: scale(1.02); background-color: #D64C20 !important; }
-    
-    /* Cards de Métricas Estilizados */
-    div[data-testid="metric-container"] {
-        background-color: white;
-        border: 1px solid #e0e0e0;
-        border-radius: 12px;
-        padding: 15px;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.02);
     }
     </style>
     """, unsafe_allow_html=True)
 
-# 2. CONEXÃO COM GOOGLE SHEETS
-# Certifique-se de configurar o link da planilha no menu 'Secrets' do Streamlit Cloud
+# 2. CONEXÃO
 conn = st.connection("gsheets", type=GSheetsConnection)
 
 def carregar_dados():
     try:
-        # Tenta ler as abas. ttl=0 garante que os dados não fiquem em cache antigo
         p = conn.read(worksheet="Produtos", ttl=0).dropna(how='all')
         m = conn.read(worksheet="Movimentacoes", ttl=0).dropna(how='all')
-        return p, m
-    except Exception:
-        # Estrutura padrão caso a planilha esteja vazia ou dê erro inicial
-        cols_p = ["ID", "SKU", "Nome", "Categoria", "Qtd_Atual", "Estoque_Minimo", "Preco_Custo", "Preco_Venda", "Localizacao"]
-        cols_m = ["Data_Hora", "SKU", "Produto", "Tipo", "Qtd", "Motivo", "Usuario"]
-        return pd.DataFrame(columns=cols_p), pd.DataFrame(columns=cols_m)
+        c = conn.read(worksheet="Categorias", ttl=0).dropna(how='all')
+        return p, m, c
+    except:
+        return pd.DataFrame(), pd.DataFrame(), pd.DataFrame(columns=["Nome"])
 
-df_p, df_m = carregar_dados()
+df_p, df_m, df_c = carregar_dados()
 
-# 3. BARRA LATERAL (MENU E LOGO)
+# 3. BARRA LATERAL
 with st.sidebar:
-    # Tenta carregar a logo da raiz do repositório
-    caminho_logo = "logo.jpg.png"
+    caminho_logo = "logo.jpg"
     if os.path.exists(caminho_logo):
         st.image(caminho_logo, use_container_width=True)
     else:
-        st.markdown("### 🚀 SofiHub")
-        st.caption("Faça o upload da 'logo.jpg' no GitHub para exibir sua marca.")
+        st.title("🚀 SofiHub")
     
     st.markdown("---")
-    menu = st.radio("NAVEGAÇÃO", ["📊 Dashboard", "🆕 Cadastrar Item", "🔄 Movimentar Estoque", "🔧 Editar / Excluir", "📋 Relatórios"])
-    st.markdown("---")
-    st.caption("v1.0 | Hub de Soluções Tecnológicas")
+    menu = st.radio("NAVEGAÇÃO", ["📊 Dashboard", "🆕 Cadastrar Item", "🔄 Movimentar Estoque", "🔧 Editar / Excluir", "🏷️ Gerenciar Categorias", "📋 Relatórios"])
 
-# --- ABA 1: DASHBOARD ---
-if menu == "📊 Dashboard":
-    st.title("📊 Painel de Controle SofiHub")
+# --- FUNÇÃO DE CATEGORIAS ---
+if menu == "🏷️ Gerenciar Categorias":
+    st.title("🏷️ Configurações de Categorias")
     
-    if not df_p.empty:
-        # Garantir que colunas numéricas sejam tratadas corretamente
-        df_p['Qtd_Atual'] = pd.to_numeric(df_p['Qtd_Atual'], errors='coerce').fillna(0)
-        df_p['Estoque_Minimo'] = pd.to_numeric(df_p['Estoque_Minimo'], errors='coerce').fillna(0)
-        
-        c1, c2, c3 = st.columns(3)
-        c1.metric("Produtos Cadastrados", len(df_p))
-        
-        alertas = df_p[df_p['Qtd_Atual'] <= df_p['Estoque_Minimo']]
-        c2.metric("Itens Críticos", len(alertas), delta_color="inverse")
-        
-        capital = (df_p['Qtd_Atual'] * pd.to_numeric(df_p['Preco_Custo'], errors='coerce').fillna(0)).sum()
-        c3.metric("Capital em Estoque", f"R$ {capital:,.2f}")
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        st.subheader("Nova Categoria")
+        nova_cat = st.text_input("Nome da Categoria (Ex: Ferramentas)")
+        if st.button("Adicionar"):
+            if nova_cat and nova_cat not in df_c['Nome'].values:
+                nova_linha = pd.DataFrame([{"Nome": nova_cat}])
+                df_c = pd.concat([df_c, nova_linha], ignore_index=True)
+                conn.update(worksheet="Categorias", data=df_c)
+                st.success(f"Categoria '{nova_cat}' criada!")
+                st.rerun()
+            else:
+                st.error("Nome inválido ou já existente.")
 
-        st.markdown("### 📋 Inventário Atual")
-        st.dataframe(df_p, use_container_width=True, hide_index=True)
-        
-        if not alertas.empty:
-            st.warning(f"⚠️ Atenção: {len(alertas)} itens precisam de reposição imediata!")
-    else:
-        st.info("👋 Bem-vindo ao SofiHub! Comece cadastrando itens no menu lateral para visualizar o Dashboard.")
+    with col2:
+        st.subheader("Excluir Existente")
+        if not df_c.empty:
+            cat_excluir = st.selectbox("Selecione para apagar", df_c['Nome'].tolist())
+            if st.button("Confirmar Exclusão"):
+                df_c = df_c[df_c['Nome'] != cat_excluir]
+                conn.update(worksheet="Categorias", data=df_c)
+                st.warning(f"Categoria '{cat_excluir}' removida.")
+                st.rerun()
 
-# --- ABA 2: CADASTRAR ITEM ---
+# --- CADASTRO (COM CATEGORIAS DINÂMICAS) ---
 elif menu == "🆕 Cadastrar Item":
-    st.title("🆕 Cadastro de Novo Produto")
-    with st.form("form_cadastro"):
-        col1, col2 = st.columns(2)
-        f_sku = col1.text_input("Código SKU")
-        f_nome = col2.text_input("Nome do Produto")
-        f_cat = col1.selectbox("Categoria", ["TI", "Suprimentos", "Hardware", "Marketing", "Outros"])
-        f_loc = col2.text_input("Localização Física")
+    st.title("🆕 Novo Produto")
+    lista_categorias = df_c['Nome'].tolist() if not df_c.empty else ["Geral"]
+    
+    with st.form("cadastro"):
+        c1, c2 = st.columns(2)
+        sku = c1.text_input("SKU")
+        nome = c2.text_input("Nome")
+        cat = c1.selectbox("Categoria", lista_categorias)
+        loc = c2.text_input("Localização")
         
-        col3, col4 = st.columns(2)
-        f_qtd = col3.number_input("Quantidade Inicial", min_value=0, step=1)
-        f_min = col4.number_input("Estoque Mínimo (Alerta)", min_value=1, step=1)
+        c3, c4 = st.columns(2)
+        qtd = c3.number_input("Qtd Inicial", min_value=0)
+        est_min = c4.number_input("Mínimo para Alerta", min_value=1)
         
-        col5, col6 = st.columns(2)
-        f_custo = col5.number_input("Preço de Custo (R$)", min_value=0.0, format="%.2f")
-        f_venda = col6.number_input("Preço de Venda (R$)", min_value=0.0, format="%.2f")
-        
-        if st.form_submit_button("SALVAR NO SOFIHUB"):
-            novo_item = pd.DataFrame([{
-                "ID": len(df_p)+1, "SKU": f_sku, "Nome": f_nome, "Categoria": f_cat, 
-                "Qtd_Atual": f_qtd, "Estoque_Minimo": f_min, "Preco_Custo": f_custo, 
-                "Preco_Venda": f_venda, "Localizacao": f_loc
-            }])
-            df_final = pd.concat([df_p, novo_item], ignore_index=True)
-            conn.update(worksheet="Produtos", data=df_final)
-            st.success("✅ Produto registrado com sucesso!")
+        if st.form_submit_button("SALVAR"):
+            novo = pd.DataFrame([{"ID": len(df_p)+1, "SKU": sku, "Nome": nome, "Categoria": cat, "Qtd_Atual": qtd, "Estoque_Minimo": est_min, "Localizacao": loc}])
+            df_p = pd.concat([df_p, novo], ignore_index=True)
+            conn.update(worksheet="Produtos", data=df_p)
+            st.success("Produto cadastrado!")
             st.rerun()
 
-# --- ABA 3: MOVIMENTAR ESTOQUE ---
-elif menu == "🔄 Movimentar Estoque":
-    st.title("🔄 Movimentação de Saldo")
+# --- DASHBOARD ---
+elif menu == "📊 Dashboard":
+    st.title("📊 Painel de Controle")
     if not df_p.empty:
-        with st.form("form_mov"):
-            prod_sel = st.selectbox("Selecione o Produto", df_p['Nome'].tolist())
-            tipo_op = st.radio("Tipo de Movimentação", ["Entrada (Aumentar)", "Saída (Diminuir)"])
-            valor_qtd = st.number_input("Quantidade", min_value=1, step=1)
-            obs_log = st.text_input("Motivo da alteração")
-            
-            if st.form_submit_button("EXECUTAR AJUSTE"):
-                idx = df_p.index[df_p['Nome'] == prod_sel][0]
-                estoque_velho = df_p.at[idx, 'Qtd_Atual']
-                
-                if "Saída" in tipo_op and estoque_velho < valor_qtd:
-                    st.error("❌ Erro: Quantidade insuficiente em estoque!")
-                else:
-                    novo_saldo = estoque_velho + valor_qtd if "Entrada" in tipo_op else estoque_velho - valor_qtd
-                    df_p.at[idx, 'Qtd_Atual'] = novo_saldo
-                    conn.update(worksheet="Produtos", data=df_p)
-                    
-                    # Salva no Histórico
-                    log = pd.DataFrame([{"Data_Hora": datetime.now().strftime("%d/%m/%Y %H:%M"), 
-                                        "SKU": df_p.at[idx, 'SKU'], "Produto": prod_sel, 
-                                        "Tipo": tipo_op, "Qtd": valor_qtd, "Motivo": obs_log, "Usuario": "Murilo"}])
-                    df_m_new = pd.concat([df_m, log], ignore_index=True)
-                    conn.update(worksheet="Movimentacoes", data=df_m_new)
-                    
-                    st.success(f"✅ Sucesso! Novo saldo de {prod_sel}: {novo_saldo}")
-                    st.rerun()
+        c1, c2, c3 = st.columns(3)
+        c1.metric("Produtos", len(df_p))
+        c2.metric("Categorias", len(df_c))
+        c3.metric("Alertas", len(df_p[pd.to_numeric(df_p['Qtd_Atual']) <= pd.to_numeric(df_p['Estoque_Minimo'])]))
+        st.divider()
+        st.dataframe(df_p, use_container_width=True, hide_index=True)
     else:
-        st.warning("Cadastre produtos primeiro para realizar movimentações.")
+        st.info("Sistema vazio. Crie categorias e cadastre itens.")
 
-# --- ABA 4: EDITAR / EXCLUIR ---
-elif menu == "🔧 Editar / Excluir":
-    st.title("🔧 Manutenção de Inventário")
+# --- MOVIMENTAR ---
+elif menu == "🔄 Movimentar Estoque":
+    st.title("🔄 Movimentação")
     if not df_p.empty:
-        item_escolhido = st.selectbox("Escolha o Item", df_p['Nome'].tolist())
-        idx_e = df_p.index[df_p['Nome'] == item_escolhido][0]
-        
-        t1, t2 = st.tabs(["📝 Editar Informações", "🗑️ Remover Item"])
-        
-        with t1:
-            e_nome = st.text_input("Novo Nome", value=df_p.at[idx_e, 'Nome'])
-            e_min = st.number_input("Novo Estoque Mínimo", value=int(df_p.at[idx_e, 'Estoque_Minimo']))
-            if st.button("SALVAR ALTERAÇÕES"):
-                df_p.at[idx_e, 'Nome'] = e_nome
-                df_p.at[idx_e, 'Estoque_Minimo'] = e_min
+        with st.form("mov"):
+            prod = st.selectbox("Item", df_p['Nome'].tolist())
+            tipo = st.radio("Tipo", ["Entrada (+)", "Saída (-)"])
+            valor = st.number_input("Quantidade", min_value=1)
+            if st.form_submit_button("EXECUTAR"):
+                idx = df_p.index[df_p['Nome'] == prod][0]
+                estoque_atual = pd.to_numeric(df_p.at[idx, 'Qtd_Atual'])
+                novo_saldo = estoque_atual + valor if "Entrada" in tipo else estoque_atual - valor
+                df_p.at[idx, 'Qtd_Atual'] = novo_saldo
                 conn.update(worksheet="Produtos", data=df_p)
-                st.success("Dados atualizados!")
+                
+                log = pd.DataFrame([{"Data_Hora": datetime.now().strftime("%d/%m/%Y %H:%M"), "SKU": df_p.at[idx, 'SKU'], "Produto": prod, "Tipo": tipo, "Qtd": valor, "Usuario": "Murilo"}])
+                df_m = pd.concat([df_m, log], ignore_index=True)
+                conn.update(worksheet="Movimentacoes", data=df_m)
+                st.success("Estoque atualizado!")
                 st.rerun()
 
-        with t2:
-            st.error(f"CUIDADO: Você está excluindo '{item_escolhido}' do SofiHub.")
-            if st.button("CONFIRMAR EXCLUSÃO PERMANENTE"):
-                df_p = df_p.drop(idx_e)
+# --- EDITAR / EXCLUIR ---
+elif menu == "🔧 Editar / Excluir":
+    st.title("🔧 Manutenção")
+    if not df_p.empty:
+        item_sel = st.selectbox("Produto", df_p['Nome'].tolist())
+        idx = df_p.index[df_p['Nome'] == item_sel][0]
+        
+        with st.expander("Editar"):
+            novo_n = st.text_input("Nome", value=df_p.at[idx, 'Nome'])
+            nova_cat = st.selectbox("Categoria", df_c['Nome'].tolist(), index=df_c['Nome'].tolist().index(df_p.at[idx, 'Categoria']) if df_p.at[idx, 'Categoria'] in df_c['Nome'].values else 0)
+            if st.button("Salvar Alterações"):
+                df_p.at[idx, 'Nome'] = novo_n
+                df_p.at[idx, 'Categoria'] = nova_cat
                 conn.update(worksheet="Produtos", data=df_p)
-                st.warning("Item deletado.")
+                st.success("Atualizado!")
                 st.rerun()
+        
+        if st.button("EXCLUIR ITEM"):
+            df_p = df_p.drop(idx)
+            conn.update(worksheet="Produtos", data=df_p)
+            st.rerun()
 
-# --- ABA 5: RELATÓRIOS ---
+# --- RELATÓRIOS ---
 elif menu == "📋 Relatórios":
-    st.title("📋 Relatórios e Auditoria")
-    st.subheader("Histórico de Movimentações")
-    st.dataframe(df_m.sort_index(ascending=False), use_container_width=True, hide_index=True)
-    
-    st.divider()
-    csv = df_p.to_csv(index=False).encode('utf-8')
-    st.download_button("📥 Baixar Planilha de Inventário (CSV)", csv, "SofiHub_Inventario.csv", "text/csv")
+    st.title("📋 Histórico")
+    st.dataframe(df_m.sort_index(ascending=False), use_container_width=True)
