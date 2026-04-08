@@ -59,7 +59,7 @@ df_p, df_m = carregar_dados()
 # 3. BARRA LATERAL (MENU E LOGO)
 with st.sidebar:
     # Tenta carregar a logo da raiz do repositório
-    caminho_logo = "logo.jpg"
+    caminho_logo = "logo.jpg.png"
     if os.path.exists(caminho_logo):
         st.image(caminho_logo, use_container_width=True)
     else:
