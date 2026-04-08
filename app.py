@@ -104,17 +104,19 @@ if menu == "📊 Dashboard":
             <h1 style="color: #28A745; font-size: 2.5rem;">{}</h1>
         </div>""".format(len(df_p)), unsafe_allow_html=True)
     with col2:
+        total_estoque = int(df_p['Qtd_Atual'].sum()) if not df_p.empty and 'Qtd_Atual' in df_p.columns else 0
         st.markdown("""
         <div class="metric-card">
             <h3>Estoque Total</h3>
             <h1 style="color: #F05A28; font-size: 2.5rem;">{}</h1>
-        </div>""".format(int(df_p['Qtd_Atual'].sum())), unsafe_allow_html=True)
+        </div>""".format(total_estoque), unsafe_allow_html=True)
     with col3:
+        total_alertas = len(df_p[df_p['Qtd_Atual'] <= df_p['Estoque_Minimo']]) if not df_p.empty and 'Qtd_Atual' in df_p.columns else 0
         st.markdown("""
         <div class="metric-card">
             <h3>Alertas</h3>
             <h1 style="color: #FF4B4B; font-size: 2.5rem;">{}</h1>
-        </div>""".format(len(df_p[df_p['Qtd_Atual'] <= df_p['Estoque_Minimo']])), unsafe_allow_html=True)
+        </div>""".format(total_alertas), unsafe_allow_html=True)
     with col4:
         st.markdown("""
         <div class="metric-card">
