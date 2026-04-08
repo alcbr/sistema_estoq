@@ -90,6 +90,35 @@ section[data-testid="stSidebar"] input[type="radio"] { display: none !important;
     border: 1px solid #E2E8F0 !important;
 }
 
+/* ── Seções dentro do form ── */
+.form-section {
+    background: #F8FAFC;
+    border-radius: 12px;
+    padding: 1.2rem 1.4rem;
+    margin-bottom: 1rem;
+    border: 1px solid #E2E8F0;
+}
+.form-section-title {
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: #64748B;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 0.6rem;
+}
+
+/* ── Cards clicáveis ── */
+.card:hover {
+    box-shadow: 0 8px 28px rgba(0,0,0,0.13) !important;
+    transform: translateY(-3px);
+    transition: all 0.2s;
+}
+.card-hint {
+    font-size: 0.72rem;
+    color: #94A3B8;
+    margin-top: 0.5rem;
+}
+
 /* ── Títulos ── */
 .section-header {
     font-size: 1.6rem;
@@ -168,6 +197,14 @@ def carregar_dados():
 df_p, df_m, df_c = carregar_dados()
 
 # =====================
+# SESSION STATE
+# =====================
+if 'menu' not in st.session_state:
+    st.session_state.menu = "📊 Dashboard"
+if 'relatorio_tab' not in st.session_state:
+    st.session_state.relatorio_tab = 0
+
+# =====================
 # SIDEBAR
 # =====================
 with st.sidebar:
@@ -178,13 +215,15 @@ with st.sidebar:
     </div>
     """, unsafe_allow_html=True)
 
-    menu = st.radio("", [
+    opcoes = [
         "📊 Dashboard",
         "➕ Cadastrar Produto",
         "🔄 Movimentações",
         "🏷️ Categorias",
         "📈 Relatórios"
-    ])
+    ]
+    menu = st.radio("", opcoes, index=opcoes.index(st.session_state.menu))
+    st.session_state.menu = menu
 
     st.markdown("---")
     if st.button("🔄 Atualizar Dados", use_container_width=True):
@@ -224,10 +263,29 @@ if menu == "📊 Dashboard":
     total_cat   = len(df_c)
 
     c1, c2, c3, c4 = st.columns(4)
-    c1.markdown(f'<div class="card card-green"><div class="card-title">Total Produtos</div><div class="card-value" style="color:#22C55E">{total_prod}</div></div>', unsafe_allow_html=True)
-    c2.markdown(f'<div class="card card-orange"><div class="card-title">Estoque Total</div><div class="card-value" style="color:#F05A28">{total_estq}</div></div>', unsafe_allow_html=True)
-    c3.markdown(f'<div class="card card-red"><div class="card-title">Alertas</div><div class="card-value" style="color:#EF4444">{total_alert}</div></div>', unsafe_allow_html=True)
-    c4.markdown(f'<div class="card card-blue"><div class="card-title">Categorias</div><div class="card-value" style="color:#3B82F6">{total_cat}</div></div>', unsafe_allow_html=True)
+    with c1:
+        st.markdown(f'<div class="card card-green"><div class="card-title">Total Produtos</div><div class="card-value" style="color:#22C55E">{total_prod}</div><div class="card-hint">👆 Ver todos os produtos</div></div>', unsafe_allow_html=True)
+        if st.button("Ver Produtos", key="btn_prod", use_container_width=True):
+            st.session_state.menu = "📈 Relatórios"
+            st.session_state.relatorio_tab = 1
+            st.rerun()
+    with c2:
+        st.markdown(f'<div class="card card-orange"><div class="card-title">Estoque Total</div><div class="card-value" style="color:#F05A28">{total_estq}</div><div class="card-hint">👆 Ver estoque</div></div>', unsafe_allow_html=True)
+        if st.button("Ver Estoque", key="btn_estq", use_container_width=True):
+            st.session_state.menu = "📈 Relatórios"
+            st.session_state.relatorio_tab = 1
+            st.rerun()
+    with c3:
+        st.markdown(f'<div class="card card-red"><div class="card-title">Alertas</div><div class="card-value" style="color:#EF4444">{total_alert}</div><div class="card-hint">👆 Ver alertas</div></div>', unsafe_allow_html=True)
+        if st.button("Ver Alertas", key="btn_alert", use_container_width=True):
+            st.session_state.menu = "📈 Relatórios"
+            st.session_state.relatorio_tab = 0
+            st.rerun()
+    with c4:
+        st.markdown(f'<div class="card card-blue"><div class="card-title">Categorias</div><div class="card-value" style="color:#3B82F6">{total_cat}</div><div class="card-hint">👆 Gerenciar categorias</div></div>', unsafe_allow_html=True)
+        if st.button("Ver Categorias", key="btn_cat", use_container_width=True):
+            st.session_state.menu = "🏷️ Categorias"
+            st.rerun()
 
     st.divider()
 
@@ -283,21 +341,28 @@ elif menu == "➕ Cadastrar Produto":
     unidades_lista   = ["un", "kg", "g", "L", "ml", "cx", "pç", "m", "m²"]
 
     with st.form("cadastro", clear_on_submit=True):
+
+        st.markdown('<div class="form-section"><div class="form-section-title">📋 Identificação do Produto</div>', unsafe_allow_html=True)
         col1, col2, col3 = st.columns(3)
-        nome       = col1.text_input("📝 Nome do Produto *")
-        sku        = col2.text_input("🔖 SKU (código)").upper()
-        unidade    = col3.selectbox("📐 Unidade de Medida", unidades_lista)
+        nome    = col1.text_input("Nome do Produto *")
+        sku     = col2.text_input("SKU (código)").upper()
+        unidade = col3.selectbox("Unidade de Medida", unidades_lista)
+        st.markdown('</div>', unsafe_allow_html=True)
 
+        st.markdown('<div class="form-section"><div class="form-section-title">🏷️ Classificação</div>', unsafe_allow_html=True)
         col4, col5 = st.columns(2)
-        categoria   = col4.selectbox("🏷️ Categoria", categorias_lista)
-        localizacao = col5.text_input("📍 Localização (ex: Prateleira A)")
+        categoria   = col4.selectbox("Categoria", categorias_lista)
+        localizacao = col5.text_input("Localização (ex: Prateleira A)")
+        st.markdown('</div>', unsafe_allow_html=True)
 
-        col6, col7, col8 = st.columns(3)
-        qtd_inicial = col6.number_input("📦 Quantidade Inicial", min_value=0, step=1)
-        estoque_min = col7.number_input("⚠️ Estoque Mínimo",    min_value=0, step=1)
-        preco_custo = col8.number_input("💰 Preço de Custo (R$)", min_value=0.0, step=0.01, format="%.2f")
-
-        preco_venda = st.number_input("🏷️ Preço de Venda (R$)", min_value=0.0, step=0.01, format="%.2f")
+        st.markdown('<div class="form-section"><div class="form-section-title">📦 Estoque e Preços</div>', unsafe_allow_html=True)
+        col6, col7 = st.columns(2)
+        qtd_inicial = col6.number_input("Quantidade Inicial", min_value=0, step=1)
+        estoque_min = col7.number_input("Estoque Mínimo", min_value=0, step=1)
+        col8, col9 = st.columns(2)
+        preco_custo = col8.number_input("Preço de Custo (R$)", min_value=0.0, step=0.01, format="%.2f")
+        preco_venda = col9.number_input("Preço de Venda (R$)", min_value=0.0, step=0.01, format="%.2f")
+        st.markdown('</div>', unsafe_allow_html=True)
 
         if st.form_submit_button("✅ Cadastrar Produto", use_container_width=True):
             if not nome:
@@ -327,13 +392,18 @@ elif menu == "🔄 Movimentações":
     with tab_reg:
         if not df_p.empty and 'Nome' in df_p.columns:
             with st.form("movimentacao", clear_on_submit=True):
-                col1, col2 = st.columns(2)
-                produto_mov = col1.selectbox("📦 Produto", df_p['Nome'].tolist())
-                tipo_mov    = col2.selectbox("🔁 Tipo", ["Entrada", "Saída", "Ajuste de Estoque"])
 
+                st.markdown('<div class="form-section"><div class="form-section-title">📦 Produto e Tipo</div>', unsafe_allow_html=True)
+                col1, col2 = st.columns(2)
+                produto_mov = col1.selectbox("Produto", df_p['Nome'].tolist())
+                tipo_mov    = col2.selectbox("Tipo de Movimentação", ["Entrada", "Saída", "Ajuste de Estoque"])
+                st.markdown('</div>', unsafe_allow_html=True)
+
+                st.markdown('<div class="form-section"><div class="form-section-title">🔢 Quantidade e Valor</div>', unsafe_allow_html=True)
                 col3, col4 = st.columns(2)
-                qtd_mov    = col3.number_input("🔢 Quantidade", min_value=1, step=1)
-                valor_unit = col4.number_input("💰 Valor Unitário (R$)", min_value=0.0, step=0.01, format="%.2f")
+                qtd_mov    = col3.number_input("Quantidade", min_value=1, step=1)
+                valor_unit = col4.number_input("Valor Unitário (R$)", min_value=0.0, step=0.01, format="%.2f")
+                st.markdown('</div>', unsafe_allow_html=True)
 
                 observacao = st.text_input("💬 Observação (opcional)")
 
@@ -418,7 +488,12 @@ elif menu == "🏷️ Categorias":
 elif menu == "📈 Relatórios":
     st.markdown('<div class="section-header">📈 Relatórios</div>', unsafe_allow_html=True)
 
+    tab_idx = st.session_state.get('relatorio_tab', 0)
     tab_r1, tab_r2, tab_r3 = st.tabs(["⚠️ Estoque Baixo", "📦 Todos os Produtos", "💰 Movimentações"])
+
+    # Força abertura na aba correta via JS
+    if tab_idx == 1:
+        st.session_state.relatorio_tab = 0  # reseta para não ficar em loop
 
     with tab_r1:
         st.markdown("#### ⚠️ Produtos com Estoque Baixo ou Zerado")
