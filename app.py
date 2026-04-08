@@ -62,8 +62,8 @@ df_p, df_m, df_c = carregar_dados()
 # 3. HEADER COM LOGO
 header_col1, header_col2, header_col3 = st.columns([1, 2, 1])
 with header_col2:
-    if os.path.exists("logo.jpg"):
-        st.image("logo.jpg", use_container_width=True)
+    if os.path.exists("logo.jpg.png"):
+        st.image("logo.jpg.png", use_container_width=True)
     else:
         st.markdown("<h1>📦 SofiHub Pro</h1>", unsafe_allow_html=True)
 
