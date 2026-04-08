@@ -24,74 +24,69 @@ st.markdown("""
 section[data-testid="stSidebar"] {
     background: #111827 !important;
     border-right: 1px solid #1F2937;
-    min-width: 220px !important;
-    max-width: 220px !important;
 }
-/* Remove bolinhas do radio */
-section[data-testid="stSidebar"] input[type="radio"] { display: none !important; }
-section[data-testid="stSidebar"] [data-testid="stMarkdownContainer"] p { display: none !important; }
-/* Itens do menu */
-section[data-testid="stSidebar"] .stRadio > div { gap: 2px !important; }
-section[data-testid="stSidebar"] .stRadio label {
-    display: flex !important;
-    align-items: center !important;
-    padding: 10px 16px !important;
-    border-radius: 8px !important;
-    color: #9CA3AF !important;
-    font-size: 0.88rem !important;
-    font-weight: 500 !important;
-    cursor: pointer !important;
-    transition: all 0.15s !important;
-    margin: 1px 8px !important;
-    border: none !important;
+section[data-testid="stSidebar"] * { color: #D1D5DB !important; }
+
+/* Esconde radio completamente */
+section[data-testid="stSidebar"] .stRadio { display: none !important; }
+
+/* Botões de menu */
+section[data-testid="stSidebar"] .stButton > button {
     background: transparent !important;
+    color: #9CA3AF !important;
+    border: none !important;
+    border-radius: 8px !important;
+    font-size: 0.9rem !important;
+    font-weight: 500 !important;
+    padding: 0.6rem 1rem !important;
+    box-shadow: none !important;
+    width: 100% !important;
+    text-align: left !important;
+    justify-content: flex-start !important;
+    transition: all 0.15s !important;
 }
-section[data-testid="stSidebar"] .stRadio label:hover {
+section[data-testid="stSidebar"] .stButton > button:hover {
     background: #1F2937 !important;
     color: #F9FAFB !important;
+    transform: none !important;
+    box-shadow: none !important;
 }
-section[data-testid="stSidebar"] .stRadio label[data-baseweb="radio"]:has(input:checked),
-section[data-testid="stSidebar"] .stRadio div[role="radiogroup"] label:has(input:checked) {
+.menu-btn-active > button {
     background: #1F2937 !important;
     color: #F9FAFB !important;
     font-weight: 600 !important;
+    border-left: 3px solid #F05A28 !important;
 }
 /* Sidebar brand */
 .sidebar-brand {
     padding: 1.5rem 1rem 1rem 1rem;
     border-bottom: 1px solid #1F2937;
-    margin-bottom: 0.75rem;
+    margin-bottom: 0.5rem;
 }
 .sidebar-brand-name {
     color: #F9FAFB !important;
-    font-size: 1.1rem !important;
+    font-size: 1.05rem !important;
     font-weight: 700 !important;
-    margin: 0 !important;
     display: block;
 }
 .sidebar-brand-sub {
     color: #6B7280 !important;
-    font-size: 0.75rem !important;
-    margin: 2px 0 0 0 !important;
+    font-size: 0.73rem !important;
     display: block;
+    margin-top: 2px;
 }
-/* Botão atualizar na sidebar */
-section[data-testid="stSidebar"] .stButton > button {
+.sidebar-divider {
+    border-top: 1px solid #1F2937;
+    margin: 0.5rem 0;
+}
+/* Botão atualizar */
+.btn-atualizar > button {
     background: #1F2937 !important;
     color: #9CA3AF !important;
     border: 1px solid #374151 !important;
     border-radius: 8px !important;
-    font-size: 0.85rem !important;
-    font-weight: 500 !important;
-    padding: 0.5rem 1rem !important;
-    box-shadow: none !important;
-    margin: 0 8px !important;
-    width: calc(100% - 16px) !important;
-}
-section[data-testid="stSidebar"] .stButton > button:hover {
-    background: #374151 !important;
-    color: #F9FAFB !important;
-    transform: none !important;
+    font-size: 0.82rem !important;
+    margin-top: 0.5rem !important;
 }
 
 /* ══════════════════════════════
@@ -273,22 +268,33 @@ with st.sidebar:
     </div>
     """, unsafe_allow_html=True)
 
-    opcoes = [
-        "📊 Dashboard",
-        "➕ Cadastrar Produto",
-        "🔄 Movimentações",
-        "🏷️ Categorias",
-        "📈 Relatórios"
-    ]
-    menu = st.radio("", opcoes, index=opcoes.index(st.session_state.menu))
-    st.session_state.menu = menu
+    opcoes = {
+        "📊 Dashboard": "📊 Dashboard",
+        "➕ Cadastrar Produto": "➕ Cadastrar Produto",
+        "🔄 Movimentações": "🔄 Movimentações",
+        "🏷️ Categorias": "🏷️ Categorias",
+        "📈 Relatórios": "📈 Relatórios",
+    }
 
-    st.markdown("---")
-    if st.button("🔄 Atualizar Dados", use_container_width=True):
+    for label in opcoes:
+        ativo = st.session_state.menu == label
+        css_class = "menu-btn-active" if ativo else ""
+        st.markdown(f'<div class="{css_class}">', unsafe_allow_html=True)
+        if st.button(label, key=f"nav_{label}", use_container_width=True):
+            st.session_state.menu = label
+            st.rerun()
+        st.markdown('</div>', unsafe_allow_html=True)
+
+    st.markdown('<div class="sidebar-divider"></div>', unsafe_allow_html=True)
+    st.markdown('<div class="btn-atualizar">', unsafe_allow_html=True)
+    if st.button("🔄 Atualizar Dados", use_container_width=True, key="btn_refresh"):
         st.cache_data.clear()
         st.rerun()
-    st.markdown("---")
-    st.markdown("<p style='color:#475569;font-size:0.75rem;text-align:center;'>© SofiHub 2026</p>", unsafe_allow_html=True)
+    st.markdown('</div>', unsafe_allow_html=True)
+    st.markdown('<div class="sidebar-divider"></div>', unsafe_allow_html=True)
+    st.markdown("<p style='color:#4B5563;font-size:0.72rem;text-align:center;padding:0.5rem 0'>© SofiHub 2026</p>", unsafe_allow_html=True)
+
+menu = st.session_state.menu
 
 # =====================
 # HEADER
