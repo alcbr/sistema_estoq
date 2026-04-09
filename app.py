@@ -9,6 +9,77 @@ import os
 # =====================
 st.set_page_config(page_title="SofiHub - Gestão de Estoque", layout="wide", page_icon="📦")
 
+# =====================
+# USUÁRIOS E LOGIN
+# =====================
+USUARIOS = {
+    "leiapollone":  {"senha": "1234321", "nome": "Leia Pollone"},
+    "murilobraga":  {"senha": "1234321", "nome": "Murilo Braga"},
+    "visitante":    {"senha": "43211234", "nome": "Visitante"},
+}
+
+if "logado" not in st.session_state:
+    st.session_state.logado = False
+if "usuario_atual" not in st.session_state:
+    st.session_state.usuario_atual = None
+
+def tela_login():
+    st.markdown("""
+    <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+    * { font-family: 'Inter', sans-serif; }
+    .stApp { background: #F7F8FA; }
+    .login-box {
+        max-width: 400px;
+        margin: 4rem auto;
+        background: white;
+        border-radius: 16px;
+        padding: 2.5rem;
+        border: 1px solid #E5E7EB;
+    }
+    .login-title { font-size: 1.5rem; font-weight: 700; color: #111827; margin-bottom: 0.25rem; }
+    .login-sub   { font-size: 0.85rem; color: #6B7280; margin-bottom: 2rem; }
+    .stButton > button {
+        background: #F05A28 !important;
+        color: white !important;
+        border: none !important;
+        border-radius: 8px !important;
+        font-weight: 600 !important;
+        width: 100% !important;
+        padding: 0.65rem !important;
+    }
+    .stButton > button:hover { background: #D94E20 !important; }
+    </style>
+    """, unsafe_allow_html=True)
+
+    col1, col2, col3 = st.columns([1, 2, 1])
+    with col2:
+        st.markdown("""
+        <div class="login-box">
+            <div class="login-title">📦 SofiHub</div>
+            <div class="login-sub">Faça login para continuar</div>
+        </div>
+        """, unsafe_allow_html=True)
+
+        with st.form("login_form"):
+            usuario = st.text_input("👤 Usuário").strip().lower()
+            senha   = st.text_input("🔒 Senha", type="password")
+            entrar  = st.form_submit_button("Entrar", use_container_width=True)
+
+            if entrar:
+                if usuario in USUARIOS and USUARIOS[usuario]["senha"] == senha:
+                    st.session_state.logado = True
+                    st.session_state.usuario_atual = usuario
+                    st.rerun()
+                else:
+                    st.error("❌ Usuário ou senha incorretos.")
+
+if not st.session_state.logado:
+    tela_login()
+    st.stop()
+
+usuario_nome = USUARIOS[st.session_state.usuario_atual]["nome"]
+
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
@@ -268,6 +339,9 @@ with st.sidebar:
     </div>
     """, unsafe_allow_html=True)
 
+    # Usuário logado
+    st.markdown(f"<div style='padding:0.5rem 1rem;margin-bottom:0.5rem;'><span style='font-size:0.75rem;color:#6B7280;'>👤 Olá, <b style=\"color:#9CA3AF\">{usuario_nome}</b></span></div>", unsafe_allow_html=True)
+
     opcoes = {
         "📊 Dashboard": "📊 Dashboard",
         "➕ Cadastrar Produto": "➕ Cadastrar Produto",
@@ -292,6 +366,10 @@ with st.sidebar:
         st.rerun()
     st.markdown('</div>', unsafe_allow_html=True)
     st.markdown('<div class="sidebar-divider"></div>', unsafe_allow_html=True)
+    if st.button("🚪 Sair", use_container_width=True, key="btn_logout"):
+        st.session_state.logado = False
+        st.session_state.usuario_atual = None
+        st.rerun()
     st.markdown("<p style='color:#4B5563;font-size:0.72rem;text-align:center;padding:0.5rem 0'>© SofiHub 2026</p>", unsafe_allow_html=True)
 
 menu = st.session_state.menu
@@ -364,7 +442,7 @@ if menu == "📊 Dashboard":
                 idx = df_p.index[df_p['Nome'] == prod_fast][0]
                 df_p.at[idx, 'Qtd_Atual'] += qtd_fast
                 conn.update(worksheet="Produtos", data=df_p)
-                log = pd.DataFrame([{"Data": datetime.now().strftime("%d/%m/%Y %H:%M"), "Produto": prod_fast, "Tipo": "Entrada Rápida", "Qtd": qtd_fast, "Valor_Unitario": 0, "Total_Gasto": 0, "Observacao": "", "Usuario": "Admin"}])
+                log = pd.DataFrame([{"Data": datetime.now().strftime("%d/%m/%Y %H:%M"), "Produto": prod_fast, "Tipo": "Entrada Rápida", "Qtd": qtd_fast, "Valor_Unitario": 0, "Total_Gasto": 0, "Observacao": "", "Usuario": usuario_nome}])
                 conn.update(worksheet="Movimentacoes", data=pd.concat([df_m, log], ignore_index=True))
                 st.cache_data.clear()
                 st.success(f"✅ +{qtd_fast} {prod_fast}")
@@ -374,7 +452,7 @@ if menu == "📊 Dashboard":
                 if df_p.at[idx, 'Qtd_Atual'] >= qtd_fast:
                     df_p.at[idx, 'Qtd_Atual'] -= qtd_fast
                     conn.update(worksheet="Produtos", data=df_p)
-                    log = pd.DataFrame([{"Data": datetime.now().strftime("%d/%m/%Y %H:%M"), "Produto": prod_fast, "Tipo": "Saída Rápida", "Qtd": qtd_fast, "Valor_Unitario": 0, "Total_Gasto": 0, "Observacao": "", "Usuario": "Admin"}])
+                    log = pd.DataFrame([{"Data": datetime.now().strftime("%d/%m/%Y %H:%M"), "Produto": prod_fast, "Tipo": "Saída Rápida", "Qtd": qtd_fast, "Valor_Unitario": 0, "Total_Gasto": 0, "Observacao": "", "Usuario": usuario_nome}])
                     conn.update(worksheet="Movimentacoes", data=pd.concat([df_m, log], ignore_index=True))
                     st.cache_data.clear()
                     st.success(f"✅ -{qtd_fast} {prod_fast}")
@@ -491,7 +569,7 @@ elif menu == "🔄 Movimentações":
                         "Produto": produto_mov, "Tipo": tipo_mov,
                         "Qtd": qtd_mov, "Valor_Unitario": valor_unit,
                         "Total_Gasto": qtd_mov * valor_unit,
-                        "Observacao": observacao, "Usuario": "Admin"
+                        "Observacao": observacao, "Usuario": usuario_nome
                     }])
                     conn.update(worksheet="Movimentacoes", data=pd.concat([df_m, log], ignore_index=True))
                     st.cache_data.clear()
@@ -538,11 +616,21 @@ elif menu == "🏷️ Categorias":
                 desc_txt = f" — {desc}" if pd.notna(desc) and str(desc).strip() else ""
                 cc1.markdown(f"**{row['Nome']}**{desc_txt}")
                 if cc2.button("🗑️", key=f"del_cat_{i}", help="Excluir categoria"):
-                    df_c_novo = df_c.drop(index=i).reset_index(drop=True)
-                    conn.update(worksheet="Categorias", data=df_c_novo)
-                    st.cache_data.clear()
-                    st.success("🗑️ Categoria removida!")
-                    st.rerun()
+                    st.session_state[f"confirmar_del_{i}"] = True
+
+                if st.session_state.get(f"confirmar_del_{i}"):
+                    st.warning(f"⚠️ Tem certeza que quer excluir **{row['Nome']}**?")
+                    c_sim, c_nao = st.columns(2)
+                    if c_sim.button("✅ Sim, excluir", key=f"sim_{i}"):
+                        df_c_novo = df_c.drop(index=i).reset_index(drop=True)
+                        conn.update(worksheet="Categorias", data=df_c_novo)
+                        st.cache_data.clear()
+                        st.session_state.pop(f"confirmar_del_{i}", None)
+                        st.success("🗑️ Categoria removida!")
+                        st.rerun()
+                    if c_nao.button("❌ Cancelar", key=f"nao_{i}"):
+                        st.session_state.pop(f"confirmar_del_{i}", None)
+                        st.rerun()
         else:
             st.info("Nenhuma categoria cadastrada.")
 
