@@ -1,3 +1,7 @@
+import hashlib
+
+def hash_senha(senha):
+    return hashlib.sha256(senha.encode()).hexdigest()
 import streamlit as st
 from streamlit_gsheets import GSheetsConnection
 import pandas as pd
