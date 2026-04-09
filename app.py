@@ -135,7 +135,7 @@ def tela_login():
             senha   = st.text_input("Senha", type="password")
             entrar  = st.form_submit_button("Entrar →", use_container_width=True)
             if entrar:
-                if usuario in USUARIOS and USUARIOS[usuario]["senha"] == senha:
+    if usuario in USUARIOS and USUARIOS[usuario]["senha"] == hash_senha(senha):
                     st.session_state.logado = True
                     st.session_state.usuario_atual = usuario
                     st.rerun()
