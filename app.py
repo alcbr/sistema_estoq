@@ -18,9 +18,9 @@ st.set_page_config(page_title="SofiHub - Gestão de Estoque", layout="wide", pag
 # USUÁRIOS E LOGIN
 # =====================
 USUARIOS = {
-    "leiapollone": {"senha": "1234321", "nome": "Leia Pollone"},
-    "murilobraga": {"senha": "1234321", "nome": "Murilo Braga"},
-    "visitante":   {"senha": "43211234", "nome": "Visitante"},
+    "leiapollone": {"senha": hash_senha("1234321")},
+    "murilobraga": {"senha": hash_senha("1234321")},
+    "visitante":   {"senha": hash_senha("1234321")},
 }
 
 if "logado" not in st.session_state:
