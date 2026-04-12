@@ -389,8 +389,11 @@ def style_stock(row):
         return styles
     val, min_v = row['Qtd_Atual'], row['Estoque_Minimo']
     bg = '#EF4444' if val <= 0 else ('#F97316' if val <= min_v else '#22C55E')
-    idx = df_p.columns.get_loc('Qtd_Atual')
-    styles[idx] = f'background:{bg};color:white;font-weight:700;border-radius:6px;padding:2px 8px;text-align:center;'
+    try:
+        idx = list(row.index).index('Qtd_Atual')
+        styles[idx] = f'background-color:{bg};color:white !important;font-weight:700;'
+    except:
+        pass
     return styles
 
 # =====================
