@@ -383,18 +383,15 @@ with col_h2:
         st.image("logo.jpg.png", use_container_width=True)
 
 # ── Cor da tabela ──
-def style_stock(row):
-    styles = [''] * len(row)
-    if 'Qtd_Atual' not in row.index or 'Estoque_Minimo' not in row.index:
-        return styles
-    val, min_v = row['Qtd_Atual'], row['Estoque_Minimo']
-    bg = '#EF4444' if val <= 0 else ('#F97316' if val <= min_v else '#22C55E')
-    try:
-        idx = list(row.index).index('Qtd_Atual')
-        styles[idx] = f'background-color:{bg};color:white !important;font-weight:700;'
-    except:
-        pass
-    return styles
+def adicionar_status(df):
+    df = df.copy()
+    if 'Qtd_Atual' in df.columns and 'Estoque_Minimo' in df.columns:
+        def status(row):
+            if row['Qtd_Atual'] <= 0:       return '🔴 Zerado'
+            elif row['Qtd_Atual'] <= row['Estoque_Minimo']: return '🟠 Baixo'
+            else:                            return '🟢 OK'
+        df.insert(df.columns.get_loc('Qtd_Atual') + 1, 'Status', df.apply(status, axis=1))
+    return df
 
 # =====================
 # DASHBOARD
@@ -470,7 +467,7 @@ if menu == "📊 Dashboard":
         if not df_p.empty:
             df_view = df_p[df_p.apply(lambda r: busca.lower() in str(r).lower(), axis=1)] if busca else df_p
             if 'Qtd_Atual' in df_view.columns and not df_view.empty:
-                st.dataframe(df_view.style.apply(style_stock, axis=1), use_container_width=True, hide_index=True)
+                st.dataframe(adicionar_status(df_view), use_container_width=True, hide_index=True)
             else:
                 st.dataframe(df_view, use_container_width=True, hide_index=True)
         else:
@@ -669,7 +666,7 @@ elif menu == "📈 Relatórios":
             filtro_cat = st.selectbox("Filtrar por Categoria", cats_disp)
             df_rel = df_p if filtro_cat == "Todas" else df_p[df_p['Categoria'] == filtro_cat]
             if 'Qtd_Atual' in df_rel.columns and not df_rel.empty:
-                st.dataframe(df_rel.style.apply(style_stock, axis=1), use_container_width=True, hide_index=True)
+                st.dataframe(adicionar_status(df_rel), use_container_width=True, hide_index=True)
             else:
                 st.dataframe(df_rel, use_container_width=True, hide_index=True)
         else:
